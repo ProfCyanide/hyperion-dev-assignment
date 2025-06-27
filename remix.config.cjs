@@ -1,3 +1,6 @@
-const { vercelVite } = require("@vercel/remix");
-
-module.exports = vercelVite();
+/** @type {import('@remix-run/dev').AppConfig} */
+module.exports = {
+    server: "./server.js",
+    serverBuildTarget: "vercel",
+    ignoredRouteFiles: ["**/.*"],
+  };
