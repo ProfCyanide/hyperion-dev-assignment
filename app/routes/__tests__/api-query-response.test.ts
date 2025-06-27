@@ -1,10 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { loader, action } from "../route";
-import { prisma as mockPrisma } from "../../../prisma.server";
-import type { Mock } from "vitest";
-
-// Mock prisma
-vi.mock("../../../prisma.server", () => ({
+// Mock prisma before importing the route or prisma client
+vi.mock("../../prisma.server", () => ({
   prisma: {
     queryResponse: {
       findMany: vi.fn(),
@@ -12,6 +8,9 @@ vi.mock("../../../prisma.server", () => ({
     },
   },
 }));
+import { loader, action } from "../api-query-response";
+import { prisma as mockPrisma } from "../../prisma.server";
+import type { Mock } from "vitest";
 
 describe("api-query-response route", () => {
   beforeEach(() => {
