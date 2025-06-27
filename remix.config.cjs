@@ -1,4 +1,3 @@
-/** @type {import('@remix-run/dev').AppConfig} */
-module.exports = {
-  serverBuildTarget: "vercel",
-};
+const { vercelVite } = require("@vercel/remix");
+
+module.exports = vercelVite();
