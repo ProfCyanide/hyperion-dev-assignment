@@ -10,6 +10,15 @@ interface QueryResponse {
   prompt?: string;
   response?: string;
   createdAt?: string;
+  guid?: string;
+}
+
+function generateGUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = crypto.getRandomValues(new Uint8Array(1))[0] % 16;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
 }
 
 export default function ChatUI() {
@@ -18,12 +27,24 @@ export default function ChatUI() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<QueryResponse[]>([]);
   const [conversation, setConversation] = useState<Message[]>([]);
+  const [guid, setGuid] = useState<string>("");
+
+  // Set guid from localStorage or generate it on mount (client only)
+  useEffect(() => {
+    let stored = localStorage.getItem("chat_guid");
+    if (!stored) {
+      stored = generateGUID();
+      localStorage.setItem("chat_guid", stored);
+    }
+    setGuid(stored);
+  }, []);
 
   useEffect(() => {
-    fetch("/api-query-response")
+    if (!guid) return;
+    fetch(`/api-query-response?guid=${guid}`)
       .then(res => res.json())
       .then(data => setHistory(data));
-  }, []);
+  }, [guid]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +59,7 @@ export default function ChatUI() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ messages: newConversation }),
+      body: JSON.stringify({ messages: newConversation, guid }),
     });
     const data = await res.json();
     setConversation([
@@ -48,9 +69,13 @@ export default function ChatUI() {
     setResponse(data.response || JSON.stringify(data));
     setPrompt("");
     setLoading(false);
-    fetch("/api-query-response")
-      .then(res => res.json())
-      .then(data => setHistory(data));
+
+    // Only fetch history if guid is set
+    if (guid) {
+      fetch(`/api-query-response?guid=${guid}`)
+        .then(res => res.json())
+        .then(data => setHistory(data));
+    }
   };
 
   return (
@@ -84,7 +109,7 @@ export default function ChatUI() {
           <ul className="space-y-2 max-h-48 overflow-y-auto">
             {history.length === 0 && <li className="text-gray-500">No history yet.</li>}
             {history.map((item, idx) => (
-              <li key={item.id ?? idx} className="p-2 bg-gray-50 dark:bg-gray-700 rounded">
+              <li key={item.guid ?? item.id ?? idx} className="p-2 bg-gray-50 dark:bg-gray-700 rounded">
                 <div className="text-sm text-gray-600 dark:text-gray-300"><strong>Prompt:</strong> {item.prompt}</div>
                 <div className="text-sm text-gray-800 dark:text-gray-100"><strong>Response:</strong> {item.response}</div>
                 {item.createdAt && <div className="text-xs text-gray-400">{new Date(item.createdAt).toLocaleString()}</div>}

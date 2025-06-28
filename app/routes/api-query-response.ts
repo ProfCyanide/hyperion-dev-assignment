@@ -2,8 +2,17 @@
 import { prisma } from "~/prisma.server";
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 
-export const loader: LoaderFunction = async () => {
+export const loader: LoaderFunction = async ({ request }) => {
+  const url = new URL(request.url);
+  const guid = url.searchParams.get("guid");
+  if (!guid) {
+    // For privacy, return empty array if no guid is provided
+    return new Response(JSON.stringify([]), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
   const all = await prisma.queryResponse.findMany({
+    where: { guid },
     orderBy: { createdAt: "desc" },
   });
   return new Response(JSON.stringify(all), {
@@ -13,9 +22,9 @@ export const loader: LoaderFunction = async () => {
 
 export const action: ActionFunction = async ({ request }) => {
   try {
-    const { messages } = await request.json();
+    const { messages, guid } = await request.json();
 
-    if (!Array.isArray(messages) || messages.length === 0) {
+    if (!Array.isArray(messages) || messages.length === 0 || !guid) {
       return new Response(JSON.stringify({ error: "Invalid input" }), {
         headers: { "Content-Type": "application/json" },
         status: 400,
@@ -50,7 +59,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     // Save to DB
     const saved = await prisma.queryResponse.create({
-      data: { prompt: lastUserMessage, response: aiResponse },
+      data: { prompt: lastUserMessage, response: aiResponse, guid },
     });
 
     return new Response(JSON.stringify(saved), {

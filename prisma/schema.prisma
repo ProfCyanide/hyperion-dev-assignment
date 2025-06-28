@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL_POSTGRES_URL")
+  url      = env("DATABASE_POSTGRES_URL")
 }
 
 model QueryResponse {
@@ -18,4 +18,5 @@ model QueryResponse {
   prompt    String
   response  String
   createdAt DateTime @default(now())
+  guid      String   // Added for per-user history
 }

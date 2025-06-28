@@ -21,7 +21,8 @@ describe("api-query-response route", () => {
     ((mockPrisma.queryResponse.findMany as unknown) as Mock).mockResolvedValueOnce([
       { id: 1, prompt: "hi", response: "hello", createdAt: new Date().toISOString() },
     ]);
-    const res = await loader({} as any);
+    const req = { url: "http://localhost/api-query-response?guid=test-guid" } as any;
+    const res = await loader({ request: req } as any);
     expect(res).toBeInstanceOf(Response);
     const response = res as Response;
     expect(response.headers.get("Content-Type")).toBe("application/json");
@@ -46,7 +47,7 @@ describe("api-query-response route", () => {
         json: () => Promise.resolve({ error: { message: "quota exceeded" } }),
       })
     ) as any;
-    const req = { json: () => Promise.resolve({ messages: [{ role: "user", content: "hi" }] }) } as any;
+    const req = { json: () => Promise.resolve({ messages: [{ role: "user", content: "hi" }], guid: "test-guid" }) } as any;
     const res = await action({ request: req } as any);
     expect(res).toBeInstanceOf(Response);
     const response = res as Response;
@@ -67,7 +68,7 @@ describe("api-query-response route", () => {
       response: "AI says hi",
       createdAt: new Date().toISOString(),
     });
-    const req = { json: () => Promise.resolve({ messages: [{ role: "user", content: "hi" }] }) } as any;
+    const req = { json: () => Promise.resolve({ messages: [{ role: "user", content: "hi" }], guid: "test-guid" }) } as any;
     const res = await action({ request: req } as any);
     expect(res).toBeInstanceOf(Response);
     const response = res as Response;
